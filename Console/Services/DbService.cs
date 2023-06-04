@@ -2,10 +2,12 @@
 using ConsoleApplication.Infrastructure.Repositories;
 using Domain;
 using Infrastructure;
-using System.Text;
 
 namespace Services
 {
+	/// <summary>
+	/// Сервис работы с репозиториями
+	/// </summary>
 	public class DbService
 	{
 		private ApplicationContext _ctx = new ApplicationContext();

@@ -5,6 +5,9 @@ using System.Text;
 
 namespace ConsoleApplication.Services
 {
+	/// <summary>
+	/// Сервис обработки пользовательских команд
+	/// </summary>
 	internal class CommandProcessingService
 	{
 		public delegate string Callback(string tip);
@@ -14,6 +17,9 @@ namespace ConsoleApplication.Services
 		private static DbService _dbService;
 
 		#region Properties
+		/// <summary>
+		/// Поддерживаемые команды
+		/// </summary>
 		static MethodInfo[] Commands
 		{
 			get
@@ -30,6 +36,9 @@ namespace ConsoleApplication.Services
 			}
 		}
 
+		/// <summary>
+		/// Информационное сообщение
+		/// </summary>
 		static string HelpMessage
 		{
 			get
@@ -47,6 +56,9 @@ namespace ConsoleApplication.Services
 			}
 		}
 
+		/// <summary>
+		/// Сервис работы с репозиториями
+		/// </summary>
 		static DbService DbService
 		{
 			get
@@ -57,11 +69,6 @@ namespace ConsoleApplication.Services
 				}
 				return _dbService;
 			}
-		}
-
-		public static void DisposeContext()
-		{
-			_dbService.Dispose();
 		}
 		#endregion
 
@@ -107,6 +114,33 @@ namespace ConsoleApplication.Services
 				return commandMethod.Invoke(null, new object[] { entityProperties }).ToString();
 			}
 			return commandMethod.Invoke(null, null).ToString();
+		}
+
+		/// <summary>
+		/// Получает атрибут <see cref="DisplayAttribute">DisplayAttribute</see> для описания команды
+		/// </summary>
+		/// <param name="method">Метод</param>
+		/// <returns>Найденный атрибут или null</returns>
+		private static DisplayAttribute GetAttr(MethodInfo method)
+		{
+			return (DisplayAttribute)method.GetCustomAttributes(typeof(DisplayAttribute)).FirstOrDefault();
+		}
+
+		/// <summary>
+		/// Проверяет, известна ли команда
+		/// </summary>
+		/// <param name="command">Пользовательский ввод</param>
+		/// <returns>true, если команда известна</returns>
+		public static bool IsCorrectCommand(string command)
+		{
+			return string.IsNullOrEmpty(command)
+				|| Commands.Any(m => m.Name.Equals(command, StringComparison.InvariantCultureIgnoreCase))
+					|| command.Equals("help", StringComparison.InvariantCultureIgnoreCase);
+		}
+
+		public static void DisposeContext()
+		{
+			_dbService.Dispose();
 		}
 
 		#region Command Methods
@@ -163,26 +197,5 @@ namespace ConsoleApplication.Services
 		}
 		#endregion
 
-		/// <summary>
-		/// Получает атрибут <see cref="DisplayAttribute">DisplayAttribute</see> для описания команды
-		/// </summary>
-		/// <param name="method">Метод</param>
-		/// <returns>Найденный атрибут или null</returns>
-		private static DisplayAttribute GetAttr(MethodInfo method)
-		{
-			return (DisplayAttribute)method.GetCustomAttributes(typeof(DisplayAttribute)).FirstOrDefault();
-		}
-
-		/// <summary>
-		/// Проверяет, известна ли команда
-		/// </summary>
-		/// <param name="command">Пользовательский ввод</param>
-		/// <returns>true, если команда известна</returns>
-		public static bool IsCorrectCommand(string command)
-		{
-			return string.IsNullOrEmpty(command)
-				|| Commands.Any(m => m.Name.Equals(command, StringComparison.InvariantCultureIgnoreCase))
-					|| command.Equals("help", StringComparison.InvariantCultureIgnoreCase);
-		}
 	}
 }
