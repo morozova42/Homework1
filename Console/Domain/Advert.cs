@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain
 {
-	[Table("advert")]
 	public class Advert : BaseEntity
 	{
 		public string Title { get; set; }

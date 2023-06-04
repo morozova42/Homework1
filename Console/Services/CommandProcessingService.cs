@@ -1,7 +1,4 @@
-﻿using ConsoleApplication.Infrastructure;
-using Domain;
-using Infrastructure;
-using Services;
+﻿using Services;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Text;
@@ -10,14 +7,11 @@ namespace ConsoleApplication.Services
 {
 	internal class CommandProcessingService
 	{
+		public delegate string Callback(string tip);
+
 		private static string _helpMessage;
 		private static MethodInfo[] _commands;
 		private static DbService _dbService;
-
-		public CommandProcessingService(DbService dbService)
-		{
-			_dbService = dbService;
-		}
 
 		#region Properties
 		static MethodInfo[] Commands
@@ -59,13 +53,15 @@ namespace ConsoleApplication.Services
 			{
 				if (_dbService == null)
 				{
-					_dbService = new DbService(
-						new EFRepository<User>(),
-						new EFRepository<Advert>(),
-						new EFRepository<Category>());
+					_dbService = new DbService();
 				}
 				return _dbService;
 			}
+		}
+
+		public static void DisposeContext()
+		{
+			_dbService.Dispose();
 		}
 		#endregion
 
@@ -74,7 +70,7 @@ namespace ConsoleApplication.Services
 		/// </summary>
 		/// <param name="command">Пользовательский ввод</param>
 		/// <returns>Строку для вывода</returns>
-		public static string ProcessCommand(string command)
+		public static string ProcessCommand(string command, Callback callback)
 		{
 			if (!IsCorrectCommand(command))
 				return "Неизвестная команда. Введите 'help' для подсказки";
@@ -95,11 +91,13 @@ namespace ConsoleApplication.Services
 				{
 					var propAttr = (DisplayAttribute)props[i].GetCustomAttributes(typeof(DisplayAttribute)).FirstOrDefault();
 					var propName = propAttr?.Name;
-					var propDesc = propAttr?.Description;
 					if (propName == null)
-						propName = props[i].Name;
-					Console.Write($"Укажите {propName} {(string.IsNullOrEmpty(propDesc) ? "" : "(" + propDesc + ")")}:\t");
-					additionalCommand = Console.ReadLine();
+					{
+						entityProperties.TryAdd(props[i].Name, "");
+						continue;
+					}
+					var propDesc = propAttr?.Description;
+					additionalCommand = callback($"Укажите {propName} {(string.IsNullOrEmpty(propDesc) ? "" : "(" + propDesc + ")")}:");
 					entityProperties.TryAdd(props[i].Name, additionalCommand);
 				}
 				if (additionalCommand.ToLower() == "q")
@@ -121,6 +119,8 @@ namespace ConsoleApplication.Services
 			{
 				strB.AppendLine($" [{adv.Id}] - {adv.Title}:");
 				strB.AppendLine($" {adv.Description}");
+				strB.AppendLine("***");
+				strB.AppendLine($" Разместил пользователь {adv.User.FirstName} {adv.User.LastName} в категории {adv.Category.Title}");
 				strB.AppendLine("--------------------------------------------------");
 			}
 			return strB.ToString();
@@ -156,10 +156,11 @@ namespace ConsoleApplication.Services
 			return DbService.CreateUser(propDict) ? "Успешно" : "Не вышло создать 8(";
 		}
 
-		//private static string CreateAdvert(Dictionary<string, string> propDict)
-		//{
-		//	return DbService.CreateUser(propDict) ? "Успешно" : "Не вышло создать 8(";
-		//}
+		[Display(Description = "Добавить новую категорию")]
+		private static string CreateCategory(Dictionary<string, string> propDict)
+		{
+			return DbService.CreateCategory(propDict) ? "Успешно" : "Не вышло создать 8(";
+		}
 		#endregion
 
 		/// <summary>

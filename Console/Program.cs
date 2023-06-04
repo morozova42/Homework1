@@ -1,5 +1,4 @@
 ﻿using ConsoleApplication.Services;
-using Services;
 
 namespace ConsoleApplication
 {
@@ -19,10 +18,17 @@ namespace ConsoleApplication
 			{
 				Beep(userCommand);
 				Console.ForegroundColor = ConsoleColor.Green;
-				Console.WriteLine(CommandProcessingService.ProcessCommand(userCommand));
+				Console.WriteLine(CommandProcessingService.ProcessCommand(userCommand, new CommandProcessingService.Callback(RequestMoreInfo)));
 				Console.ResetColor();
 				userCommand = Console.ReadLine();
 			}
+			CommandProcessingService.DisposeContext();
+		}
+
+		static string RequestMoreInfo(string tip)
+		{
+			Console.WriteLine(tip);
+			return Console.ReadLine();
 		}
 
 		static void Beep(string command)

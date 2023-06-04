@@ -4,7 +4,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain
 {
-	[Table("users")]
 	public class User :BaseEntity
 	{
 		[Display(Name = "Имя пользователя")]
@@ -15,5 +14,7 @@ namespace Domain
 
 		[Display(Name = "Отчество пользователя", Description = "необязательное поле")]
 		public string? MiddleName { get; set; }
+
+		public List<Advert> Adverts { get; set; }
 	}
 }

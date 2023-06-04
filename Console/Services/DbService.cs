@@ -1,4 +1,5 @@
 ﻿using ConsoleApplication.Abstractions;
+using ConsoleApplication.Infrastructure.Repositories;
 using Domain;
 using Infrastructure;
 using System.Text;
@@ -7,30 +8,44 @@ namespace Services
 {
 	public class DbService
 	{
+		private ApplicationContext _ctx = new ApplicationContext();
 		private IRepository<User> _userRepository;
 		private IRepository<Advert> _advertRepository;
 		private IRepository<Category> _categoryRepository;
+		private bool disposed = false;
 
-		public DbService(IRepository<User> userRepository,
-			IRepository<Advert> advertRepository,
-			IRepository<Category> categoryRepository)
+		public DbService()
 		{
-			_userRepository = userRepository;
-			_advertRepository = advertRepository;
-			_categoryRepository = categoryRepository;
+			_userRepository = new UserRepository(_ctx);
+			_advertRepository = new AdvertRepository(_ctx);
+			_categoryRepository = new CategoryRepository(_ctx);
 		}
 
-		#region Adverts methods
+		#region Advert methods
 		public IEnumerable<Advert> GetAllAdverts()
 		{
 			return _advertRepository.GetAll();
 		}
 		#endregion
+
+		#region Category methods
 		public IEnumerable<Category> GetAllCategories()
 		{
 			return _categoryRepository.GetAll();
 		}
 
+		public bool CreateCategory(Dictionary<string, string> propDict)
+		{
+			Category newCategory = new Category
+			{
+				Title = propDict[nameof(Category.Title)],
+				Description = propDict[nameof(Category.Description)]
+			};
+			return _categoryRepository.Create(newCategory);
+		}
+		#endregion
+
+		#region User methods
 		public IEnumerable<User> GetAllUsers()
 		{
 			return _userRepository.GetAll();
@@ -46,14 +61,16 @@ namespace Services
 			};
 			return _userRepository.Create(newUser);
 		}
+		#endregion
 
-		//public bool CreateAdvert(Dictionary<string, string> propDict)
-		//{
-		//	Advert newAdvert = new Advert
-		//	{
-		//		Category = _categoryRepository.Get propDict[nameof(Advert.Category)],
-		//	};
-		//	return _advertRepository.Create(newAdvert);
-		//}
+		public void Dispose()
+		{
+			if (!disposed)
+			{
+				_ctx.Dispose();
+			}
+			disposed = true;
+			GC.SuppressFinalize(this);
+		}
 	}
 }
